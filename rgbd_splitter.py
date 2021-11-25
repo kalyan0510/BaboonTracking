@@ -22,7 +22,8 @@ def read_fps(cap):
     return cap.get(cv.cv.CV_CAP_PROP_FPS) if (int(major_ver) < 3) else cap.get(cv.CAP_PROP_FPS)
 
 
-def split_video(input_path, save_path, is_depth):
+def split_video(input_path, save_path, to_save_channel):
+    is_depth = to_save_channel == 'd'
     cap = cv.VideoCapture(input_path)
     ret, frame = cap.read()
     fourcc = cv.VideoWriter_fourcc(*'XVID')
@@ -48,7 +49,15 @@ if __name__ == '__main__':
     if len(args) == 0:
         split_images(base_path, save_path)
 
-    if isVid(args[0]) and isVid(args[1]):
-        split_video(args[0], [args[1], args[0]][len(args) <= 1], [args[2], 'rgb'][len(args) <= 2] in ['D', 'd'])
+    if isVid(args[0]):
+        to_save_channel = [args[len(args)-1], 'rgb'][len(args) <= 2]
+        if len(args) <= 1:
+            save_path = args[0]
+        else:
+            save_path = args[1]
+        if save_path == args[0]:
+            ext_len = len(save_path.split('.')[-1]) + 1
+            save_path = save_path[:-ext_len] + '_'+to_save_channel+save_path[-ext_len:]
+        split_video(args[0], save_path, to_save_channel)
     else:
         split_images(base_path, save_path)
