@@ -1,0 +1,6 @@
+[submodule "yolov4-deepsort"]
+	path = yolov4-deepsort
+	url = https://github.com/kalyan0510/yolov4-deepsort
+[submodule "darknet"]
+	path = darknet
+	url = https://github.com/kalyan0510/darknet
