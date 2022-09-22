@@ -23,7 +23,7 @@ Once the new pasting locations are finalized, the image is pasted over them and 
 
 With multiple augmentations linked in chain: The 500 images served to create dataset with ~5k annoatated images. 
 
-Sample YOLO detection results:
+Sample YOLO detection results (mAP@0.50 = 88.38 % over the test data):
 ![vlcsnap-2021-09-27-16h58m07s271_RGB_ShuffleObject8 png](https://user-images.githubusercontent.com/14043633/191662111-71df4fbf-6479-4c4c-b2c7-4caa000a5cae.png)
 ![vlcsnap-2021-09-27-16h58m38s197_RGB_ShuffleObject8 png](https://user-images.githubusercontent.com/14043633/191662135-392bb499-4b8e-4472-ab42-ed71852e50b5.png)
 ![vlcsnap-2021-10-04-13h39m21s459_RGB_ShuffleObject8 png](https://user-images.githubusercontent.com/14043633/191662144-0844e1e6-f7a0-4cbf-b060-8dbb19ce74bd.png)
