@@ -1,5 +1,3 @@
-import random
-
 import cv2 as cv
 import numpy as np
 from tqdm import tqdm
@@ -66,6 +64,8 @@ if __name__ == '__main__':
         augmentor.add_augmentor(ShuffleObjectAugmentor(max_obj_shuffle=3, max_aug=4))
         # preview_annotation(img, annotations)
         augmentation_data = augmentor.augment(img, annotations)
+        #add self
+        augmentation_data.append((img, annotations, "Original"))
         bar.set_description("Augmentations per image: %s, mean: %.3f, total: %d\t" % (
         len(augmentation_data), len(all_image_paths) / (i + 1), len(all_image_paths)))
         for aug_im, anno, aug_name in augmentation_data:

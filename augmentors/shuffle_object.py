@@ -1,28 +1,42 @@
 import numpy as np
 import cv2 as cv
 
-from ps_hepers.helpers import imshow, non_max_suppression
+from ps_hepers.helpers import imshow, non_max_suppression, mark_points
 
 
 class ShuffleObjectAugmentor:
 
-    def __init__(self, max_aug=3, max_obj_shuffle=3, downscale_ratio=0.1):
+    def __init__(self, max_aug=3, max_obj_shuffle=3, downscale_ratio=0.5):
         self.max_obj_shuffle = max_obj_shuffle
         self.downscale_ratio = downscale_ratio
         self.max_aug = max_aug
 
-    def to_ltrb(self, a1):
-        return np.asarray([a1[1] - a1[3] / 2, a1[2] - a1[4] / 2, a1[1] + a1[3] / 2, a1[2] + a1[4] / 2])
+    def to_ltrb(self, anno):
+        """
+        converts the annotations from center-size notation (Xc,Yc,h,w) to left-top-right-bottom notation (l,t,r,b)
+        :param anno: annotation
+        :return: annotation in ltrb notation
+        """
+        return np.asarray([anno[1] - anno[3] / 2, anno[2] - anno[4] / 2, anno[1] + anno[3] / 2, anno[2] + anno[4] / 2])
 
-    def get_inner_outer_boundaries(self, shp, anno, padding=None):
-        l, t, r, b = (self.to_ltrb(anno) * np.asarray([shp[1], shp[0], shp[1], shp[0]])).astype(np.int)
+    def get_inner_outer_boundaries(self, shape, anno, padding=None):
+        """
+        returns two ltrb boundaries (in pixels) without and with padding included.
+        :param shape: shape of image
+        :param anno: an annotation in ltrb notation
+        :param padding: margin around the annotation
+        :return: ltrb1 (wo/ padding for annotation), ltrb2 (annotation is padded)
+        """
+        l, t, r, b = (self.to_ltrb(anno) * np.asarray([shape[1], shape[0], shape[1], shape[0]])).astype(np.int)
         W = [padding, int(1 / self.downscale_ratio)][padding is None]
-        l_, t_, r_, b_ = max(0, l - W), max(0, t - W), min(shp[1], r + W), min(shp[0], b + W)
+        l_, t_, r_, b_ = max(0, l - W), max(0, t - W), min(shape[1], r + W), min(shape[0], b + W)
+        # print(shape, anno, (b - t, r - l))
         return (l, t, r, b), (l_, t_, r_, b_)
 
     def get_annotation_neighbourhood_avg(self, image, anno):
         (l, t, r, b), (l_, t_, r_, b_) = self.get_inner_outer_boundaries(image.shape, anno)
         # imshow(image[t:b,l:r])
+        # print(image[t_:b_, l_:l].mean(axis=(1)).shape)
         return np.asarray(np.concatenate([image[t_:b_, l_:l].mean(axis=(0, 1)), image[t_:t, l_:r_].mean(axis=(0, 1)),
                                           image[t_:b_, r:r_].mean(axis=(0, 1)), image[b:b_, l_:r_].mean(axis=(0, 1))],
                                          axis=0)), (b_ - t_, r_ - l_)
@@ -33,7 +47,7 @@ class ShuffleObjectAugmentor:
     def find_best_shuffle_pos(self, downscaled_img, neighborhood_avg_info, annotation):
         n_avg, (h_, w_) = neighborhood_avg_info
         (h, w) = (np.ceil(h_ * self.downscale_ratio).astype(np.int), np.ceil(w_ * self.downscale_ratio).astype(np.int))
-        #REMOVE print(downscaled_img.shape, w, h, downscaled_img.shape[1] - w, downscaled_img.shape[0] - h)
+        # REMOVE print(downscaled_img.shape, w, h, downscaled_img.shape[1] - w, downscaled_img.shape[0] - h)
         (l, t, r, b), (l_, t_, r_, b_) = self.get_inner_outer_boundaries(downscaled_img.shape, annotation, 2)
         downscaled_img[t_:b_, l_:r_] = 0
         sw_an = np.zeros((downscaled_img.shape[0] - h, downscaled_img.shape[1] - w, 4 * 3))
@@ -104,7 +118,7 @@ class ShuffleObjectAugmentor:
                 if possible_intersection == 0.0 and self.area(anno) > 0.0003 and drop_crossings_filter(anno):
                     selected_annotations.append(anno)
                     old_position_mapping.append(old_pos)
-        #REMOVE print(old_position_mapping)
+        # REMOVE print(old_position_mapping)
         return selected_annotations, old_position_mapping
 
     def morph_image(self, image_orig, old_annotations, new_annotations, pos_map):
@@ -150,7 +164,7 @@ class ShuffleObjectAugmentor:
         min_found_shuffle_matches = min([len(n_c_info) for n_c_info in new_centers_info], default=0)
         for i in range(min_found_shuffle_matches):
             new_annos, old_pmap = self.find_k_best_shuffles(annotations, [n_c_info[i] for n_c_info in new_centers_info])
-            #REMOVE print(len(new_annos))
+            # REMOVE print(len(new_annos))
             if len(new_annos) > 0:
                 new_annotations_set.append(new_annos)
                 pos_maps.append(old_pmap)

@@ -28,6 +28,7 @@ def split_video(input_path, save_path, to_save_channel):
     ret, frame = cap.read()
     fourcc = cv.VideoWriter_fourcc(*'XVID')
     out = cv.VideoWriter(save_path, fourcc, read_fps(cap), (frame.shape[1] // 2, frame.shape[0]))
+    out.write(frame[:, frame.shape[1] // 2:, :] if is_depth else frame[:, :frame.shape[1] // 2, :])
     total_f_count = int(cap.get(cv.CAP_PROP_FRAME_COUNT))
     for i in tqdm(range(total_f_count)):
         ret, frame = cap.read()
